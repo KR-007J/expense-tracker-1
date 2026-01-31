@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Expense Tracker</title>
+    <style>
+        /* CSS: Styles for layout and design */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 350px;
+        }
+
+        h2 { text-align: center; margin-bottom: 20px; color: #333; }
+
+        .balance-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .balance-amount {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: #218838; }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        li {
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Expense Tracker</h2>
+    
+    <div class="balance-container">
+        <div>Total Balance</div>
+        <div class="balance-amount" id="balance">$0.00</div>
+    </div>
+
+    <form id="expense-form">
+        <input type="text" id="text" placeholder="Expense Name (e.g. Coffee)" required />
+        <input type="number" id="amount" placeholder="Amount (e.g. 5.00)" required />
+        <button type="submit">Add Transaction</button>
+    </form>
+
+    <ul id="list">
+        </ul>
+</div>
+
+<script>
+    /* JavaScript: Logic for adding, deleting, and calculating totals */
+    
+    const balanceEl = document.getElementById('balance');
+    const list = document.getElementById('list');
+    const form = document.getElementById('expense-form');
+    const textObj = document.getElementById('text');
+    const amountObj = document.getElementById('amount');
+
+    // Use LocalStorage to keep data after refresh
+    let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+
+    // Add a new transaction
+    function addTransaction(e) {
+        e.preventDefault();
+
+        if(textObj.value.trim() === '' || amountObj.value.trim() === '') {
+            alert('Please add a text and amount');
+            return;
+        }
+
+        const transaction = {
+            id: generateID(),
+            text: textObj.value,
+            amount: +amountObj.value // The '+' converts string to number
+        };
+
+        transactions.push(transaction);
+        addTransactionDOM(transaction);
+        updateValues();
+        updateLocalStorage();
+
+        textObj.value = '';
+        amountObj.value = '';
+    }
+
+    // Generate random ID
+    function generateID() {
+        return Math.floor(Math.random() * 100000000);
+    }
+
+    // Add transactions to DOM list
+    function addTransactionDOM(transaction) {
+        const item = document.createElement('li');
+
+        item.innerHTML = `
+            ${transaction.text} 
+            <span>-$${Math.abs(transaction.amount).toFixed(2)}
+                <button class="delete-btn" onclick="removeTransaction(${transaction.id})">x</button>
+            </span>
+        `;
+
+        list.appendChild(item);
+    }
+
+    // Update the balance total
+    function updateValues() {
+        const amounts = transactions.map(transaction => transaction.amount);
+        const total = amounts.reduce((acc, item) => acc + item, 0).toFixed(2);
+        balanceEl.innerText = `$${total}`;
+    }
+
+    // Remove transaction by ID
+    function removeTransaction(id) {
+        transactions = transactions.filter(transaction => transaction.id !== id);
+        updateLocalStorage();
+        init();
+    }
+
+    // Update local storage
+    function updateLocalStorage() {
+        localStorage.setItem('transactions', JSON.stringify(transactions));
+    }
+
+    // Initialize app
+    function init() {
+        list.innerHTML = '';
+        transactions.forEach(addTransactionDOM);
+        updateValues();
+    }
+
+    init();
+    form.addEventListener('submit', addTransaction);
+</script>
+
+</body>
+</html>
